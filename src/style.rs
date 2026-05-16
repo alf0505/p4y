@@ -30,6 +30,7 @@ pub enum Container {
     Sidebar,
     Header,
     Box,
+    Overlay,
 }
 
 impl container::StyleSheet for PremiumDark {
@@ -70,6 +71,10 @@ impl container::StyleSheet for PremiumDark {
                     width: 1.0,
                     radius: 2.0.into(),
                 },
+                ..Default::default()
+            },
+            Container::Overlay => container::Appearance {
+                background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
                 ..Default::default()
             },
         }
@@ -156,12 +161,38 @@ impl button::StyleSheet for PremiumDark {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Text {
+    #[default]
+    Normal,
+    Bright,
+    Accent,
+    Color(Color),
+}
+
+impl From<Color> for Text {
+    fn from(color: Color) -> Self {
+        Text::Color(color)
+    }
+}
+
 impl text::StyleSheet for PremiumDark {
-    type Style = Color;
+    type Style = Text;
 
     fn appearance(&self, style: Self::Style) -> text::Appearance {
-        text::Appearance {
-            color: Some(style),
+        match style {
+            Text::Normal => text::Appearance {
+                color: Some(TEXT_NORMAL),
+            },
+            Text::Bright => text::Appearance {
+                color: Some(TEXT_BRIGHT),
+            },
+            Text::Accent => text::Appearance {
+                color: Some(ACCENT),
+            },
+            Text::Color(c) => text::Appearance {
+                color: Some(c),
+            },
         }
     }
 }
@@ -231,12 +262,28 @@ impl text_input::StyleSheet for PremiumDark {
         }
     }
 
+    fn disabled(&self, _style: &Self::Style) -> text_input::Appearance {
+        let active = self.active(&());
+        text_input::Appearance {
+            background: Background::Color(color!(0x2d2d2d)),
+            border: Border {
+                color: color!(0x444444),
+                ..active.border
+            },
+            icon_color: color!(0x555555),
+        }
+    }
+
     fn placeholder_color(&self, _style: &Self::Style) -> Color {
         color!(0x888888)
     }
 
     fn value_color(&self, _style: &Self::Style) -> Color {
         TEXT_BRIGHT
+    }
+
+    fn disabled_color(&self, _style: &Self::Style) -> Color {
+        color!(0x666666)
     }
 
     fn selection_color(&self, _style: &Self::Style) -> Color {

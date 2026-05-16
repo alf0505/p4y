@@ -3,7 +3,7 @@ mod tree;
 mod style;
 
 use iced::widget::{button, column, container, row, scrollable, text, text_input};
-use iced::{executor, Application, Command, Element, Settings, Theme};
+use iced::{executor, Application, Command, Element, Settings};
 use tree::{TreeNode, fetch_children, find_node_mut};
 use p4::{Changelist, ChangelistDetail, P4Settings, fetch_history, fetch_cl_detail, fetch_file_content};
 
@@ -212,7 +212,7 @@ impl Application for P4y {
     fn view(&self) -> Element<'_, Message, style::PremiumDark> {
         let toolbar = container(
             row![
-                text("p4y").size(24).width(iced::Length::Fill).style(style::TEXT_BRIGHT),
+                text("p4y").size(24).width(iced::Length::Fill).style(style::Text::Bright),
                 button(text("Refresh").size(14))
                     .on_press(Message::Refresh)
                     .style(style::Button::Secondary)
@@ -230,14 +230,14 @@ impl Application for P4y {
 
         // Tree Pane
         let tree_header = container(
-            text("DEPOT TREE").size(12).style(style::TEXT_BRIGHT)
+            text("DEPOT TREE").size(12).style(style::Text::Bright)
         )
         .width(iced::Length::Fill)
         .padding([8, 12])
         .style(style::Container::Header);
 
-        let tree_content = if self.loading_tree {
-            container(text("Loading tree...").style(style::TEXT_NORMAL))
+        let tree_content: Element<'_, Message, style::PremiumDark> = if self.loading_tree {
+            container(text("Loading tree...").style(style::Text::Normal))
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
@@ -246,7 +246,7 @@ impl Application for P4y {
         } else if let Some(ref root) = self.root_node {
             scrollable(view_tree(root, 0, self.selected_path.as_deref())).into()
         } else {
-            container(text("No tree data").style(style::TEXT_NORMAL))
+            container(text("No tree data").style(style::Text::Normal))
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
@@ -263,14 +263,14 @@ impl Application for P4y {
 
         // History Pane
         let history_header = container(
-            text("FILE HISTORY").size(12).style(style::TEXT_BRIGHT)
+            text("FILE HISTORY").size(12).style(style::Text::Bright)
         )
         .width(iced::Length::Fill)
         .padding([8, 12])
         .style(style::Container::Header);
 
-        let history_content = if self.loading_history {
-            container(text("Loading history...").style(style::TEXT_NORMAL))
+        let history_content: Element<'_, Message, style::PremiumDark> = if self.loading_history {
+            container(text("Loading history...").style(style::Text::Normal))
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
@@ -278,7 +278,7 @@ impl Application for P4y {
                 .into()
         } else {
             if self.history.is_empty() {
-                container(text("Select a file to see its history").size(14).style(style::TEXT_NORMAL))
+                container(text("Select a file to see its history").size(14).style(style::Text::Normal))
                     .width(iced::Length::Fill)
                     .height(iced::Length::Fill)
                     .center_x()
@@ -292,12 +292,12 @@ impl Application for P4y {
                         button(
                             column![
                                 row![
-                                    text(format!("CL {}", cl.id)).size(14).style(style::TEXT_BRIGHT),
+                                    text(format!("CL {}", cl.id)).size(14).style(style::Text::Bright),
                                     iced::widget::horizontal_space().width(iced::Length::Fill),
-                                    text(&cl.date).size(12).style(style::TEXT_NORMAL),
+                                    text(&cl.date).size(12).style(style::Text::Normal),
                                 ],
-                                text(&cl.author).size(12).style(style::ACCENT),
-                                text(&cl.description).size(12).style(style::TEXT_NORMAL),
+                                text(&cl.author).size(12).style(style::Text::Accent),
+                                text(&cl.description).size(12).style(style::Text::Normal),
                             ].spacing(4)
                         )
                         .width(iced::Length::Fill)
@@ -319,14 +319,14 @@ impl Application for P4y {
 
         // Detail Pane
         let detail_header = container(
-            text("CHANGELIST DETAILS").size(12).style(style::TEXT_BRIGHT)
+            text("CHANGELIST DETAILS").size(12).style(style::Text::Bright)
         )
         .width(iced::Length::Fill)
         .padding([8, 12])
         .style(style::Container::Header);
 
-        let detail_content = if self.loading_detail {
-            container(text("Loading CL details...").style(style::TEXT_NORMAL))
+        let detail_content: Element<'_, Message, style::PremiumDark> = if self.loading_detail {
+            container(text("Loading CL details...").style(style::Text::Normal))
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
@@ -334,19 +334,19 @@ impl Application for P4y {
                 .into()
         } else if let Some(ref detail) = self.selected_cl {
             let info = column![
-                text(format!("Changelist {}", detail.id)).size(24).style(style::TEXT_BRIGHT),
+                text(format!("Changelist {}", detail.id)).size(24).style(style::Text::Bright),
                 row![
-                    text(format!("Author: {}", detail.author)).size(14).style(style::ACCENT),
-                    text(format!("Date: {}", detail.date)).size(14).style(style::TEXT_NORMAL),
+                    text(format!("Author: {}", detail.author)).size(14).style(style::Text::Accent),
+                    text(format!("Date: {}", detail.date)).size(14).style(style::Text::Normal),
                 ].spacing(20),
                 container(
-                    scrollable(text(&detail.description).size(14).style(style::TEXT_NORMAL))
+                    scrollable(text(&detail.description).size(14).style(style::Text::Normal))
                 )
                 .padding(12)
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fixed(120.0))
                 .style(style::Container::Box),
-                text("AFFECTED FILES").size(12).style(style::TEXT_BRIGHT),
+                text("AFFECTED FILES").size(12).style(style::Text::Bright),
             ].spacing(16);
 
             let mut files_col = column![].spacing(1);
@@ -356,7 +356,7 @@ impl Application for P4y {
                 files_col = files_col.push(
                     container(
                         row![
-                            text(file).size(13).style(style::TEXT_NORMAL).width(iced::Length::Fill),
+                            text(file).size(13).style(style::Text::Normal).width(iced::Length::Fill),
                             button(text("View").size(12))
                                 .on_press(Message::ViewContent(format!("{}@{}", file_path, cl_id)))
                                 .style(style::Button::Primary)
@@ -369,7 +369,7 @@ impl Application for P4y {
             }
             column![info, scrollable(files_col)].padding(20).spacing(16).into()
         } else {
-            container(text("Select a changelist to see details").style(style::TEXT_NORMAL))
+            container(text("Select a changelist to see details").style(style::Text::Normal))
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
@@ -405,25 +405,25 @@ impl Application for P4y {
             );
         }
 
-        let base_view: Element<_, style::PremiumDark> = content.into();
+        let base_view: Element<'_, Message, style::PremiumDark> = content.into();
 
-        let mut final_view = base_view;
+        let mut final_view: Element<'_, Message, style::PremiumDark> = base_view;
 
         if self.show_settings {
             let settings_content = container(
                 column![
                     row![
-                        text("Settings").size(24).style(style::TEXT_BRIGHT).width(iced::Length::Fill),
+                        text("Settings").size(24).style(style::Text::Bright).width(iced::Length::Fill),
                         button(text("✕").size(16))
                             .on_press(Message::ToggleSettings)
                             .style(style::Button::Ghost)
                     ],
                     column![
-                        text("P4PORT").size(12).style(style::TEXT_NORMAL),
+                        text("P4PORT").size(12).style(style::Text::Normal),
                         text_input("e.g. perforce:1666", &self.settings.port).on_input(Message::P4PortChanged).padding(10),
-                        text("P4USER").size(12).style(style::TEXT_NORMAL),
+                        text("P4USER").size(12).style(style::Text::Normal),
                         text_input("username", &self.settings.user).on_input(Message::P4UserChanged).padding(10),
-                        text("P4CLIENT").size(12).style(style::TEXT_NORMAL),
+                        text("P4CLIENT").size(12).style(style::Text::Normal),
                         text_input("workspace", &self.settings.client).on_input(Message::P4ClientChanged).padding(10),
                     ].spacing(12)
                 ].spacing(24)
@@ -437,12 +437,7 @@ impl Application for P4y {
                 .height(iced::Length::Fill)
                 .center_x()
                 .center_y()
-                .style(|_theme: &style::PremiumDark| {
-                    iced::widget::container::Appearance {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
-                        ..Default::default()
-                    }
-                })
+                .style(style::Container::Overlay)
                 .into();
         }
 
@@ -450,13 +445,13 @@ impl Application for P4y {
             let modal_content = container(
                 column![
                     row![
-                        text("File Content").size(20).style(style::TEXT_BRIGHT).width(iced::Length::Fill),
+                        text("File Content").size(20).style(style::Text::Bright).width(iced::Length::Fill),
                         button(text("Close").size(14))
                             .on_press(Message::CloseModal)
                             .style(style::Button::Primary)
                             .padding([6, 12])
                     ].align_items(iced::Alignment::Center),
-                    container(scrollable(text(content).size(13).style(style::TEXT_NORMAL)))
+                    container(scrollable(text(content).size(13).style(style::Text::Normal)))
                         .width(iced::Length::Fill)
                         .height(iced::Length::Fill)
                         .padding(12)
@@ -473,12 +468,7 @@ impl Application for P4y {
                 .height(iced::Length::Fill)
                 .center_x()
                 .center_y()
-                .style(|_theme: &style::PremiumDark| {
-                    iced::widget::container::Appearance {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
-                        ..Default::default()
-                    }
-                })
+                .style(style::Container::Overlay)
                 .into();
         }
 
