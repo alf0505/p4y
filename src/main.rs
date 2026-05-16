@@ -4,7 +4,7 @@ mod tree;
 use iced::widget::{button, column, container, row, scrollable, text};
 use iced::{executor, Application, Command, Element, Settings, Theme};
 use tree::{TreeNode, fetch_children, find_node_mut};
-use p4::{Changelist, ChangelistDetail, fetch_history, fetch_cl_detail};
+use p4::{Changelist, ChangelistDetail, fetch_history, fetch_cl_detail, fetch_file_content};
 
 pub fn main() -> iced::Result {
     P4y::run(Settings::default())
@@ -16,6 +16,8 @@ struct P4y {
     selected_cl: Option<ChangelistDetail>,
     loading_history: bool,
     loading_detail: bool,
+    content_modal: Option<String>,
+    error: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +29,10 @@ enum Message {
     HistoryLoaded(Vec<Changelist>),
     CLSelected(u32),
     CLDetailLoaded(ChangelistDetail),
+    ViewContent(String),
+    ContentLoaded(String),
+    CloseModal,
+    ClearError,
 }
 
 impl Application for P4y {
@@ -45,6 +51,8 @@ impl Application for P4y {
                 selected_cl: None,
                 loading_history: false,
                 loading_detail: false,
+                content_modal: None,
+                error: None,
             },
             Command::perform(
                 async move { fetch_children(&path_for_fetch).await },
@@ -63,7 +71,11 @@ impl Application for P4y {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::P4Error(err) => {
-                eprintln!("P4 Error: {}", err);
+                self.error = Some(err);
+                Command::none()
+            }
+            Message::ClearError => {
+                self.error = None;
                 Command::none()
             }
             Message::ToggleExpanded(path) => {
@@ -124,6 +136,20 @@ impl Application for P4y {
                 self.loading_detail = false;
                 Command::none()
             }
+            Message::ViewContent(path_with_rev) => {
+                Command::perform(fetch_file_content(path_with_rev), |res| match res {
+                    Ok(content) => Message::ContentLoaded(content),
+                    Err(e) => Message::P4Error(e.to_string()),
+                })
+            }
+            Message::ContentLoaded(content) => {
+                self.content_modal = Some(content);
+                Command::none()
+            }
+            Message::CloseModal => {
+                self.content_modal = None;
+                Command::none()
+            }
         }
     }
 
@@ -148,7 +174,7 @@ impl Application for P4y {
                 col = col.push(
                     button(
                         column![
-                            text(format!("CL {} - {}", cl.id, cl.author)).size(14),
+                            text(format!("CL {} - {} ({})", cl.id, cl.author, cl.date)).size(14),
                             text(&cl.description).size(12),
                         ]
                     )
@@ -179,7 +205,14 @@ impl Application for P4y {
             ].spacing(10);
 
             for file in &detail.affected_files {
-                col = col.push(text(file).size(12));
+                let file_path = file.clone();
+                let cl_id = detail.id;
+                col = col.push(
+                    row![
+                        text(file).size(12),
+                        button("View").on_press(Message::ViewContent(format!("{}@{}", file_path, cl_id))).padding(2)
+                    ].spacing(10)
+                );
             }
             col
         } else {
@@ -192,7 +225,55 @@ impl Application for P4y {
             .padding(10)
             .style(iced::theme::Container::Box);
 
-        row![tree_pane, history_pane, detail_pane].into()
+        let main_content = row![tree_pane, history_pane, detail_pane];
+
+        let base_view: Element<_> = if let Some(ref err) = self.error {
+            column![
+                main_content,
+                container(
+                    row![
+                        text(format!("Error: {}", err)).style(iced::theme::Text::Color(iced::Color::from_rgb(0.8, 0.0, 0.0))),
+                        button("Clear").on_press(Message::ClearError)
+                    ].spacing(10)
+                )
+                .width(iced::Length::Fill)
+                .padding(10)
+                .style(iced::theme::Container::Box)
+            ].into()
+        } else {
+            main_content.into()
+        };
+
+        if let Some(ref content) = self.content_modal {
+            let modal_content = container(
+                column![
+                    row![
+                        iced::widget::horizontal_space(),
+                        button("Close").on_press(Message::CloseModal)
+                    ],
+                    scrollable(text(content).size(12))
+                ].spacing(10)
+            )
+            .width(iced::Length::FillPortion(8))
+            .height(iced::Length::FillPortion(8))
+            .padding(20)
+            .style(iced::theme::Container::Box);
+
+            container(modal_content)
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .style(|_theme: &Theme| {
+                    iced::widget::container::Appearance {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                        ..Default::default()
+                    }
+                })
+                .into()
+        } else {
+            base_view
+        }
     }
 }
 
@@ -205,20 +286,16 @@ fn view_tree(node: &TreeNode, indent: u16) -> Element<'_, Message> {
         "  "
     };
 
+    let on_press = if node.is_directory() {
+        Message::ToggleExpanded(node.path.clone())
+    } else {
+        Message::FileSelected(node.path.clone())
+    };
+
     let label = button(text(format!("{}{}", prefix, node.name)).size(14))
         .padding(2)
         .style(iced::theme::Button::Text)
-        .on_press(if node.is_directory() {
-            if node.children.is_none() {
-                // This is a bit tricky, maybe I should have a FetchChildren message
-                // For now, let's just toggle and handle it in update
-                Message::ToggleExpanded(node.path.clone())
-            } else {
-                Message::ToggleExpanded(node.path.clone())
-            }
-        } else {
-            Message::FileSelected(node.path.clone())
-        });
+        .on_press(on_press);
 
     content = content.push(
         row![iced::widget::horizontal_space().width(iced::Length::Fixed(indent as f32 * 15.0)), label]

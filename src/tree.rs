@@ -60,21 +60,6 @@ impl TreeNode {
         }
         false
     }
-
-    pub fn find_and_toggle(&mut self, target_path: &str) -> bool {
-        if self.path == target_path {
-            self.toggle_expanded();
-            return true;
-        }
-        if let Some(ref mut children) = self.children {
-            for child in children {
-                if child.find_and_toggle(target_path) {
-                    return true;
-                }
-            }
-        }
-        false
-    }
 }
 
 pub async fn fetch_children(parent_path: &str) -> Result<Vec<TreeNode>, P4Error> {

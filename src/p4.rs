@@ -123,6 +123,21 @@ pub async fn fetch_history(path: &str) -> Result<Vec<Changelist>, P4Error> {
     Ok(changes)
 }
 
+pub async fn fetch_file_content(path_with_rev: &str) -> Result<String, P4Error> {
+    let output = Command::new("p4")
+        .arg("print")
+        .arg("-q")
+        .arg(path_with_rev)
+        .output()
+        .await?;
+
+    if output.status.success() {
+        Ok(String::from_utf8(output.stdout)?)
+    } else {
+        Err(P4Error::Process(String::from_utf8_lossy(&output.stderr).to_string()))
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct ChangelistDetail {
     pub id: u32,
