@@ -79,13 +79,25 @@ pub fn parse_ztag(output: &str) -> ZtagOutput {
     ZtagOutput { records }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct P4Settings {
+    pub port: String,
+    pub user: String,
+    pub client: String,
+}
+
 /// Runs a Perforce command with the given arguments and returns the Ztag-formatted output.
-pub async fn run_p4(args: Vec<&str>) -> Result<String, P4Error> {
-    let output = Command::new("p4")
-        .arg("-Ztag")
-        .args(args)
-        .output()
-        .await?;
+pub async fn run_p4(args: Vec<&str>, settings: Option<&P4Settings>) -> Result<String, P4Error> {
+    let mut command = Command::new("p4");
+    command.arg("-Ztag");
+    
+    if let Some(s) = settings {
+        if !s.port.is_empty() { command.env("P4PORT", &s.port); }
+        if !s.user.is_empty() { command.env("P4USER", &s.user); }
+        if !s.client.is_empty() { command.env("P4CLIENT", &s.client); }
+    }
+
+    let output = command.args(args).output().await?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
@@ -102,8 +114,8 @@ pub struct Changelist {
     pub description: String,
 }
 
-pub async fn fetch_history(path: &str) -> Result<Vec<Changelist>, P4Error> {
-    let output = run_p4(vec!["changes", "-m", "100", path]).await?;
+pub async fn fetch_history(path: &str, settings: Option<P4Settings>) -> Result<Vec<Changelist>, P4Error> {
+    let output = run_p4(vec!["changes", "-m", "100", path], settings.as_ref()).await?;
     let ztag = parse_ztag(&output);
     let mut changes = Vec::new();
 
@@ -123,13 +135,17 @@ pub async fn fetch_history(path: &str) -> Result<Vec<Changelist>, P4Error> {
     Ok(changes)
 }
 
-pub async fn fetch_file_content(path_with_rev: &str) -> Result<String, P4Error> {
-    let output = Command::new("p4")
-        .arg("print")
-        .arg("-q")
-        .arg(path_with_rev)
-        .output()
-        .await?;
+pub async fn fetch_file_content(path_with_rev: &str, settings: Option<P4Settings>) -> Result<String, P4Error> {
+    let mut command = Command::new("p4");
+    command.arg("print").arg("-q");
+
+    if let Some(s) = settings {
+        if !s.port.is_empty() { command.env("P4PORT", &s.port); }
+        if !s.user.is_empty() { command.env("P4USER", &s.user); }
+        if !s.client.is_empty() { command.env("P4CLIENT", &s.client); }
+    }
+
+    let output = command.arg(path_with_rev).output().await?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)?)
@@ -147,9 +163,9 @@ pub struct ChangelistDetail {
     pub affected_files: Vec<String>,
 }
 
-pub async fn fetch_cl_detail(cl_id: u32) -> Result<ChangelistDetail, P4Error> {
+pub async fn fetch_cl_detail(cl_id: u32, settings: Option<P4Settings>) -> Result<ChangelistDetail, P4Error> {
     let cl_id_str = cl_id.to_string();
-    let output = run_p4(vec!["describe", "-s", &cl_id_str]).await?;
+    let output = run_p4(vec!["describe", "-s", &cl_id_str], settings.as_ref()).await?;
     let ztag = parse_ztag(&output);
     
     if let Some(record) = ztag.records.first() {

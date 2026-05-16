@@ -1,4 +1,4 @@
-use crate::p4::{run_p4, parse_ztag, P4Error};
+use crate::p4::{run_p4, parse_ztag, P4Error, P4Settings};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -62,12 +62,12 @@ impl TreeNode {
     }
 }
 
-pub async fn fetch_children(parent_path: &str) -> Result<Vec<TreeNode>, P4Error> {
+pub async fn fetch_children(parent_path: &str, settings: Option<P4Settings>) -> Result<Vec<TreeNode>, P4Error> {
     let wildcard_path = format!("{}/*", parent_path);
 
     let (dirs_output, files_output) = tokio::join!(
-        run_p4(vec!["dirs", &wildcard_path]),
-        run_p4(vec!["files", &wildcard_path])
+        run_p4(vec!["dirs", &wildcard_path], settings.as_ref()),
+        run_p4(vec!["files", &wildcard_path], settings.as_ref())
     );
 
     let mut children = Vec::new();
