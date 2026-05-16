@@ -2,10 +2,21 @@ mod p4;
 mod tree;
 mod style;
 
-use iced::widget::{button, column, container, row, scrollable, text, text_input};
+use iced::widget::{button, column, container, row, scrollable, text, text_input, svg};
 use iced::{executor, Application, Command, Element, Settings};
 use tree::{TreeNode, fetch_children, find_node_mut};
 use p4::{Changelist, ChangelistDetail, P4Settings, fetch_history, fetch_cl_detail, fetch_file_content};
+
+const REFRESH_ICON: &[u8] = include_bytes!("../assets/icons/refresh.svg");
+const SETTINGS_ICON: &[u8] = include_bytes!("../assets/icons/settings.svg");
+const FILE_ICON: &[u8] = include_bytes!("../assets/icons/file.svg");
+const FOLDER_ICON: &[u8] = include_bytes!("../assets/icons/folder.svg");
+const CHEVRON_RIGHT_ICON: &[u8] = include_bytes!("../assets/icons/chevron-right.svg");
+const CHEVRON_DOWN_ICON: &[u8] = include_bytes!("../assets/icons/chevron-down.svg");
+const CLOCK_ICON: &[u8] = include_bytes!("../assets/icons/clock.svg");
+const PERSON_ICON: &[u8] = include_bytes!("../assets/icons/person.svg");
+const CLOSE_ICON: &[u8] = include_bytes!("../assets/icons/close.svg");
+const INFO_ICON: &[u8] = include_bytes!("../assets/icons/info.svg");
 
 pub fn main() -> iced::Result {
     P4y::run(Settings::default())
@@ -212,18 +223,38 @@ impl Application for P4y {
     fn view(&self) -> Element<'_, Message, style::PremiumDark> {
         let toolbar = container(
             row![
-                text("p4y").size(24).width(iced::Length::Fill).style(style::Text::Bright),
-                button(text("Refresh").size(14))
-                    .on_press(Message::Refresh)
-                    .style(style::Button::Secondary)
-                    .padding([6, 12]),
-                button(text("Settings").size(14))
-                    .on_press(Message::ToggleSettings)
-                    .style(style::Button::Secondary)
-                    .padding([6, 12]),
+                text("p4y").size(28).style(style::Text::Accent),
+                text("Inspector").size(20).style(style::Text::Normal),
+                iced::widget::horizontal_space().width(iced::Length::Fill),
+                button(
+                    row![
+                        svg(svg::Handle::from_memory(REFRESH_ICON))
+                            .width(16)
+                            .height(16)
+                            .style(style::Svg::Normal),
+                        text(" Refresh").size(14)
+                    ]
+                    .align_items(iced::Alignment::Center)
+                )
+                .on_press(Message::Refresh)
+                .style(style::Button::Secondary)
+                .padding([8, 16]),
+                button(
+                    row![
+                        svg(svg::Handle::from_memory(SETTINGS_ICON))
+                            .width(16)
+                            .height(16)
+                            .style(style::Svg::Normal),
+                        text(" Settings").size(14)
+                    ]
+                    .align_items(iced::Alignment::Center)
+                )
+                .on_press(Message::ToggleSettings)
+                .style(style::Button::Secondary)
+                .padding([8, 16]),
             ]
-            .spacing(12)
-            .padding(12)
+            .spacing(16)
+            .padding(16)
             .align_items(iced::Alignment::Center)
         )
         .style(style::Container::Sidebar);
@@ -244,7 +275,7 @@ impl Application for P4y {
                 .center_y()
                 .into()
         } else if let Some(ref root) = self.root_node {
-            scrollable(view_tree(root, 0, self.selected_path.as_deref())).into()
+            scrollable(container(view_tree(root, 0, self.selected_path.as_deref())).padding([10, 0])).into()
         } else {
             container(text("No tree data").style(style::Text::Normal))
                 .width(iced::Length::Fill)
@@ -285,23 +316,35 @@ impl Application for P4y {
                     .center_y()
                     .into()
             } else {
-                let mut items = column![].spacing(1);
+                let mut items = column![].spacing(10).padding(10);
                 for cl in &self.history {
                     let is_selected = self.selected_cl.as_ref().map(|d| d.id == cl.id).unwrap_or(false);
                     items = items.push(
                         button(
                             column![
                                 row![
-                                    text(format!("CL {}", cl.id)).size(14).style(style::Text::Bright),
+                                    text(format!("CL {}", cl.id)).size(15).style(style::Text::Bright),
                                     iced::widget::horizontal_space().width(iced::Length::Fill),
-                                    text(&cl.date).size(12).style(style::Text::Normal),
+                                    row![
+                                        svg(svg::Handle::from_memory(CLOCK_ICON))
+                                            .width(12)
+                                            .height(12)
+                                            .style(style::Svg::Normal),
+                                        text(format!(" {}", &cl.date)).size(11).style(style::Text::Normal),
+                                    ].align_items(iced::Alignment::Center),
                                 ],
-                                text(&cl.author).size(12).style(style::Text::Accent),
-                                text(&cl.description).size(12).style(style::Text::Normal),
-                            ].spacing(4)
+                                row![
+                                    svg(svg::Handle::from_memory(PERSON_ICON))
+                                        .width(13)
+                                        .height(13)
+                                        .style(style::Svg::Accent),
+                                    text(format!(" {}", &cl.author)).size(12).style(style::Text::Accent),
+                                ].align_items(iced::Alignment::Center),
+                                text(&cl.description).size(13).style(style::Text::Normal),
+                            ].spacing(6)
                         )
                         .width(iced::Length::Fill)
-                        .padding(10)
+                        .padding(14)
                         .on_press(Message::CLSelected(cl.id))
                         .style(style::Button::ListItem { selected: is_selected })
                     );
@@ -334,40 +377,56 @@ impl Application for P4y {
                 .into()
         } else if let Some(ref detail) = self.selected_cl {
             let info = column![
-                text(format!("Changelist {}", detail.id)).size(24).style(style::Text::Bright),
+                text(format!("Changelist {}", detail.id)).size(28).style(style::Text::Bright),
                 row![
-                    text(format!("Author: {}", detail.author)).size(14).style(style::Text::Accent),
-                    text(format!("Date: {}", detail.date)).size(14).style(style::Text::Normal),
-                ].spacing(20),
+                    row![
+                        svg(svg::Handle::from_memory(PERSON_ICON))
+                            .width(14)
+                            .height(14)
+                            .style(style::Svg::Accent),
+                        text(format!(" {}", detail.author)).size(14).style(style::Text::Accent),
+                    ].align_items(iced::Alignment::Center),
+                    row![
+                        svg(svg::Handle::from_memory(CLOCK_ICON))
+                            .width(14)
+                            .height(14)
+                            .style(style::Svg::Normal),
+                        text(format!(" {}", detail.date)).size(14).style(style::Text::Normal),
+                    ].align_items(iced::Alignment::Center),
+                ].spacing(24),
                 container(
-                    scrollable(text(&detail.description).size(14).style(style::Text::Normal))
+                    scrollable(text(&detail.description).size(15).style(style::Text::Normal))
                 )
-                .padding(12)
+                .padding(16)
                 .width(iced::Length::Fill)
-                .height(iced::Length::Fixed(120.0))
+                .height(iced::Length::Fixed(140.0))
                 .style(style::Container::Box),
                 text("AFFECTED FILES").size(12).style(style::Text::Bright),
-            ].spacing(16);
+            ].spacing(20);
 
-            let mut files_col = column![].spacing(1);
+            let mut files_col = column![].spacing(8);
             for file in &detail.affected_files {
                 let file_path = file.clone();
                 let cl_id = detail.id;
                 files_col = files_col.push(
                     container(
                         row![
-                            text(file).size(13).style(style::Text::Normal).width(iced::Length::Fill),
-                            button(text("View").size(12))
+                            svg(svg::Handle::from_memory(FILE_ICON))
+                                .width(14)
+                                .height(14)
+                                .style(style::Svg::Normal),
+                            text(format!(" {}", file)).size(13).style(style::Text::Normal).width(iced::Length::Fill),
+                            button(text("View Content").size(12))
                                 .on_press(Message::ViewContent(format!("{}@{}", file_path, cl_id)))
                                 .style(style::Button::Primary)
-                                .padding([4, 10])
-                        ].spacing(10).align_items(iced::Alignment::Center)
+                                .padding([6, 14])
+                        ].spacing(12).align_items(iced::Alignment::Center)
                     )
-                    .padding([4, 8])
-                    .style(style::Container::Main)
+                    .padding(12)
+                    .style(style::Container::Box)
                 );
             }
-            column![info, scrollable(files_col)].padding(20).spacing(16).into()
+            column![info, scrollable(files_col)].padding(24).spacing(20).into()
         } else {
             container(text("Select a changelist to see details").style(style::Text::Normal))
                 .width(iced::Length::Fill)
@@ -392,7 +451,11 @@ impl Application for P4y {
             content = content.push(
                 container(
                     row![
-                        text(format!("Error: {}", err)).style(iced::Color::from_rgb(0.9, 0.3, 0.3)),
+                        svg(svg::Handle::from_memory(INFO_ICON))
+                            .width(14)
+                            .height(14)
+                            .style(style::Svg::Normal),
+                        text(format!(" Error: {}", err)).style(iced::Color::from_rgb(0.9, 0.3, 0.3)),
                         iced::widget::horizontal_space().width(iced::Length::Fill),
                         button(text("Clear").size(12))
                             .on_press(Message::ClearError)
@@ -414,9 +477,14 @@ impl Application for P4y {
                 column![
                     row![
                         text("Settings").size(24).style(style::Text::Bright).width(iced::Length::Fill),
-                        button(text("✕").size(16))
-                            .on_press(Message::ToggleSettings)
-                            .style(style::Button::Ghost)
+                        button(
+                            svg(svg::Handle::from_memory(CLOSE_ICON))
+                                .width(16)
+                                .height(16)
+                                .style(style::Svg::Normal)
+                        )
+                        .on_press(Message::ToggleSettings)
+                        .style(style::Button::Ghost)
                     ],
                     column![
                         text("P4PORT").size(12).style(style::Text::Normal),
@@ -446,10 +514,18 @@ impl Application for P4y {
                 column![
                     row![
                         text("File Content").size(20).style(style::Text::Bright).width(iced::Length::Fill),
-                        button(text("Close").size(14))
-                            .on_press(Message::CloseModal)
-                            .style(style::Button::Primary)
-                            .padding([6, 12])
+                        button(
+                            row![
+                                svg(svg::Handle::from_memory(CLOSE_ICON))
+                                    .width(14)
+                                    .height(14)
+                                    .style(style::Svg::Normal),
+                                text(" Close").size(14)
+                            ].align_items(iced::Alignment::Center)
+                        )
+                        .on_press(Message::CloseModal)
+                        .style(style::Button::Primary)
+                        .padding([6, 12])
                     ].align_items(iced::Alignment::Center),
                     container(scrollable(text(content).size(13).style(style::Text::Normal)))
                         .width(iced::Length::Fill)
@@ -479,10 +555,32 @@ impl Application for P4y {
 fn view_tree<'a>(node: &'a TreeNode, indent: u16, selected_path: Option<&'a str>) -> Element<'a, Message, style::PremiumDark> {
     let mut content = column![].spacing(0);
 
-    let prefix = if node.is_directory() {
-        if node.is_expanded { "▼ " } else { "▶ " }
+    let icon = if node.is_directory() {
+        let handle = if node.is_expanded {
+            svg::Handle::from_memory(CHEVRON_DOWN_ICON)
+        } else {
+            svg::Handle::from_memory(CHEVRON_RIGHT_ICON)
+        };
+        svg(handle)
+            .width(12)
+            .height(12)
+            .style(style::Svg::Normal)
     } else {
-        "  "
+        svg(svg::Handle::from_memory(FILE_ICON))
+            .width(14)
+            .height(14)
+            .style(style::Svg::Normal)
+    };
+
+    let folder_icon = if node.is_directory() {
+        Some(
+            svg(svg::Handle::from_memory(FOLDER_ICON))
+                .width(14)
+                .height(14)
+                .style(style::Svg::Accent)
+        )
+    } else {
+        None
     };
 
     let on_press = if node.is_directory() {
@@ -493,16 +591,22 @@ fn view_tree<'a>(node: &'a TreeNode, indent: u16, selected_path: Option<&'a str>
 
     let is_selected = selected_path == Some(&node.path);
 
-    let label = button(
-        row![
-            iced::widget::horizontal_space().width(iced::Length::Fixed(indent as f32 * 12.0)),
-            text(format!("{}{}", prefix, node.name)).size(13)
-        ].align_items(iced::Alignment::Center)
-    )
-    .width(iced::Length::Fill)
-    .padding([3, 8])
-    .style(style::Button::ListItem { selected: is_selected })
-    .on_press(on_press);
+    let mut row_content = row![
+        iced::widget::horizontal_space().width(iced::Length::Fixed(indent as f32 * 12.0)),
+        icon,
+    ].spacing(8).align_items(iced::Alignment::Center);
+
+    if let Some(f_icon) = folder_icon {
+        row_content = row_content.push(f_icon);
+    }
+
+    row_content = row_content.push(text(&node.name).size(13));
+
+    let label = button(row_content)
+        .width(iced::Length::Fill)
+        .padding([3, 8])
+        .style(style::Button::ListItem { selected: is_selected })
+        .on_press(on_press);
 
     content = content.push(label);
 

@@ -1,5 +1,5 @@
 use iced::{application, color, Color, Background, Border};
-use iced::widget::{container, button, scrollable, text, text_input};
+use iced::widget::{container, button, scrollable, text, text_input, svg};
 
 pub const BACKGROUND_MAIN: Color = color!(0x1e1e1e);
 pub const BACKGROUND_SIDEBAR: Color = color!(0x252526);
@@ -69,12 +69,12 @@ impl container::StyleSheet for PremiumDark {
                 border: Border {
                     color: BORDER_COLOR,
                     width: 1.0,
-                    radius: 2.0.into(),
+                    radius: 8.0.into(),
                 },
                 ..Default::default()
             },
             Container::Overlay => container::Appearance {
-                background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
+                background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.8))),
                 ..Default::default()
             },
         }
@@ -101,7 +101,7 @@ impl button::StyleSheet for PremiumDark {
                 background: Some(Background::Color(ACCENT)),
                 text_color: TEXT_BRIGHT,
                 border: Border {
-                    radius: 2.0.into(),
+                    radius: 8.0.into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -110,13 +110,17 @@ impl button::StyleSheet for PremiumDark {
                 background: Some(Background::Color(color!(0x3a3d41))),
                 text_color: TEXT_NORMAL,
                 border: Border {
-                    radius: 2.0.into(),
+                    radius: 8.0.into(),
                     ..Default::default()
                 },
                 ..Default::default()
             },
             Button::Ghost => button::Appearance {
                 text_color: TEXT_NORMAL,
+                border: Border {
+                    radius: 6.0.into(),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
             Button::ListItem { selected } => button::Appearance {
@@ -127,6 +131,7 @@ impl button::StyleSheet for PremiumDark {
                 },
                 text_color: if *selected { TEXT_BRIGHT } else { TEXT_NORMAL },
                 border: Border {
+                    radius: 4.0.into(),
                     color: if *selected { ACCENT } else { Color::TRANSPARENT },
                     width: if *selected { 1.0 } else { 0.0 },
                     ..Default::default()
@@ -205,13 +210,13 @@ impl scrollable::StyleSheet for PremiumDark {
             scrollbar: scrollable::Scrollbar {
                 background: Some(BACKGROUND_MAIN.into()),
                 border: Border {
-                    radius: 0.0.into(),
+                    radius: 4.0.into(),
                     ..Default::default()
                 },
                 scroller: scrollable::Scroller {
                     color: color!(0x4f4f4f),
                     border: Border {
-                        radius: 0.0.into(),
+                        radius: 4.0.into(),
                         ..Default::default()
                     },
                 },
@@ -245,7 +250,7 @@ impl text_input::StyleSheet for PremiumDark {
             border: Border {
                 color: BORDER_COLOR,
                 width: 1.0,
-                radius: 2.0.into(),
+                radius: 10.0.into(),
             },
             icon_color: TEXT_NORMAL,
         }
@@ -288,5 +293,27 @@ impl text_input::StyleSheet for PremiumDark {
 
     fn selection_color(&self, _style: &Self::Style) -> Color {
         color!(0x264f78)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Svg {
+    #[default]
+    Normal,
+    Accent,
+}
+
+impl svg::StyleSheet for PremiumDark {
+    type Style = Svg;
+
+    fn appearance(&self, style: &Self::Style) -> svg::Appearance {
+        match style {
+            Svg::Normal => svg::Appearance {
+                color: Some(TEXT_NORMAL),
+            },
+            Svg::Accent => svg::Appearance {
+                color: Some(ACCENT),
+            },
+        }
     }
 }
