@@ -1,0 +1,67 @@
+<h2>p4y: 읽기 전용 Workspace 브라우저</h2>
+<p class="subtitle">파일 수정보다는 서버의 내용을 탐색하고 이력을 조회하는 데 최적화된 설계입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y Inspector</div>
+  <div class="mockup-body" style="height: 450px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속 설정] [새로고침] | <b>Workspace: Project_Alpha</b> | [검색: 파일명...]
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left: Workspace Tree -->
+      <div class="mock-sidebar" style="width: 250px; border-right: 1px solid #ccc; padding: 10px; background: #f5f5f5;">
+        <div class="label">File Explorer</div>
+        <ul style="list-style: none; padding-left: 10px; font-size: 13px;">
+          <li>📁 src</li>
+          <li style="padding-left: 15px; background: #e0e0e0;">📄 main.rs</li>
+          <li style="padding-left: 15px;">📄 util.rs</li>
+          <li>📄 Cargo.toml</li>
+          <li>📄 README.md</li>
+        </ul>
+      </div>
+      
+      <!-- Center/Right: Content & History -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column;">
+        <!-- Content Viewer (Top) -->
+        <div style="flex: 2; padding: 10px; overflow: auto; background: #fff; border-bottom: 2px solid #ddd;">
+          <div class="label">main.rs - Preview</div>
+          <pre style="font-family: monospace; font-size: 12px; color: #333;">
+fn main() {
+    println!("Hello, p4y!");
+}
+          </pre>
+        </div>
+        
+        <!-- History Viewer (Bottom) -->
+        <div style="flex: 1; padding: 10px; background: #fafafa; overflow-y: auto;">
+          <div class="label">Revision History</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <tr style="border-bottom: 1px solid #eee; text-align: left; background: #eee;">
+              <th>Rev</th>
+              <th>Changelist</th>
+              <th>Date</th>
+              <th>Author</th>
+              <th>Description</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>10</td>
+              <td>54321</td>
+              <td>2026-05-15</td>
+              <td>user_a</td>
+              <td>Fix bug in main loop</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>9</td>
+              <td>54300</td>
+              <td>2026-05-14</td>
+              <td>user_b</td>
+              <td>Initial setup</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

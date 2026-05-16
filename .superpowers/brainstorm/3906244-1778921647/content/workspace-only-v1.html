@@ -1,0 +1,59 @@
+<h2>p4y: Workspace 전용 뷰 레이아웃</h2>
+<p class="subtitle">Depot 뷰를 제외하고 로컬 작업 영역(Workspace)의 상태를 확인하는 데 집중한 설계입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y Workspace Explorer</div>
+  <div class="mockup-body" style="height: 400px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속] [새로고침] [최신버전 받기(Get Latest)] [수정(Edit)] | <b>Workspace: My_Local_Project</b>
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left Sidebar (Workspace Tree) -->
+      <div class="mock-sidebar" style="width: 280px; border-right: 1px solid #ccc; padding: 10px;">
+        <div class="label">Workspace Files</div>
+        <ul style="list-style: none; padding-left: 10px; font-size: 14px;">
+          <li>📁 . (root)</li>
+          <li style="padding-left: 15px;">📁 src</li>
+          <li style="padding-left: 30px;">📄 main.rs <span style="color: blue;">(checked out)</span></li>
+          <li style="padding-left: 30px;">📄 lib.rs</li>
+          <li style="padding-left: 15px;">📄 Cargo.toml</li>
+        </ul>
+      </div>
+      
+      <!-- Right Main Content: File Details or Pending Changes -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column; padding: 10px;">
+        <div class="label">File Details / Status</div>
+        <div class="placeholder" style="flex: 1; background: #fff; padding: 10px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+              <th>Name</th>
+              <th>Status</th>
+              <th>Revision</th>
+              <th>Action</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>main.rs</td>
+              <td><span style="color: blue;">edit</span></td>
+              <td>5/10</td>
+              <td>[Revert] [Submit]</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>lib.rs</td>
+              <td>have</td>
+              <td>3/3</td>
+              <td>-</td>
+            </tr>
+          </table>
+        </div>
+        
+        <!-- Bottom Log -->
+        <div style="height: 60px; border-top: 1px solid #ccc; margin-top: 10px; padding: 5px; font-family: monospace; font-size: 11px; background: #f9f9f9;">
+          p4 fstat //depot/project/src/main.rs ...<br>
+          ... found 1 file(s)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

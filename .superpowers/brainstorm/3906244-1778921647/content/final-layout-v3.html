@@ -1,0 +1,72 @@
+<h2>p4y: 트리 + 히스토리 + CL 상세 브라우저</h2>
+<p class="subtitle">트리에서 파일을 선택하고, 히스토리 목록에서 특정 CL을 선택해 상세 정보(설명, 영향받은 파일)를 확인합니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y Inspector</div>
+  <div class="mockup-body" style="height: 550px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속 설정] [새로고침] | <b>Workspace: Project_Alpha</b>
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left: Workspace Tree (Navigation) -->
+      <div class="mock-sidebar" style="width: 250px; border-right: 2px solid #ccc; padding: 10px; background: #f8f9fa;">
+        <div class="label">Workspace Tree</div>
+        <ul style="list-style: none; padding-left: 10px; font-size: 13px; line-height: 1.8;">
+          <li>📁 src</li>
+          <li style="padding-left: 20px; background: #007bff; color: white; border-radius: 2px;">📄 main.rs</li>
+          <li style="padding-left: 20px;">📄 util.rs</li>
+        </ul>
+      </div>
+      
+      <!-- Right: Data Inspector -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column;">
+        
+        <!-- Right-Top: History (List of CLs) -->
+        <div style="flex: 1; padding: 10px; background: #fff; border-bottom: 2px solid #ddd; overflow-y: auto;">
+          <div class="label">Revision History: main.rs</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr style="border-bottom: 1px solid #eee; text-align: left; background: #eee;">
+              <th>Rev</th>
+              <th>CL</th>
+              <th>Date</th>
+              <th>Author</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee; background: #f0f7ff;">
+              <td>10</td>
+              <td>54321</td>
+              <td>2026-05-15</td>
+              <td>user_a</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>9</td>
+              <td>54300</td>
+              <td>2026-05-14</td>
+              <td>user_b</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Right-Bottom: CL Details (Description & Affected Files) -->
+        <div style="flex: 1.2; padding: 10px; background: #fafafa; overflow-y: auto;">
+          <div class="label">Changelist 54321 Details</div>
+          <div style="margin-bottom: 15px;">
+             <div style="font-size: 11px; color: #666; font-weight: bold;">Description:</div>
+             <div style="font-size: 12px; background: #fff; border: 1px solid #eee; padding: 5px;">
+                Fix bug in main loop that caused memory leak.
+             </div>
+          </div>
+          <div>
+             <div style="font-size: 11px; color: #666; font-weight: bold;">Affected Files:</div>
+             <ul style="list-style: none; padding-left: 5px; font-size: 12px;">
+                <li>📄 //depot/project/src/main.rs#10 <span style="color: #888;">(edit)</span> <button style="font-size: 9px;">내용 보기</button></li>
+                <li>📄 //depot/project/src/util.rs#5 <span style="color: #888;">(edit)</span> <button style="font-size: 9px;">내용 보기</button></li>
+             </ul>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>

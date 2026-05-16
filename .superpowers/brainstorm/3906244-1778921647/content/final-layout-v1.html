@@ -1,0 +1,71 @@
+<h2>p4y: 트리 기반 히스토리 브라우저 (최종 레이아웃 구상)</h2>
+<p class="subtitle">왼쪽의 안정적인 트리로 탐색하고, 오른쪽에서 히스토리를 파악하는 구조입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y Explorer</div>
+  <div class="mockup-body" style="height: 500px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속 설정] [새로고침] | <b>Workspace: Project_Alpha</b>
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left: Stable Workspace Tree -->
+      <div class="mock-sidebar" style="width: 250px; border-right: 2px solid #ccc; padding: 10px; background: #f8f9fa;">
+        <div class="label">Workspace Tree</div>
+        <ul style="list-style: none; padding-left: 10px; font-size: 13px; line-height: 1.6;">
+          <li>📁 . (root)</li>
+          <li style="padding-left: 15px;">📁 docs</li>
+          <li style="padding-left: 15px;">📁 src</li>
+          <li style="padding-left: 30px; background: #007bff; color: white; border-radius: 2px; padding-right: 5px;">📄 main.rs</li>
+          <li style="padding-left: 30px;">📄 util.rs</li>
+          <li style="padding-left: 15px;">📄 Cargo.toml</li>
+        </ul>
+      </div>
+      
+      <!-- Right: History & Content Focus -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column;">
+        
+        <!-- Top-Right: History of selected file/folder -->
+        <div style="flex: 1; padding: 10px; background: #fff; border-bottom: 2px solid #ddd; overflow-y: auto;">
+          <div class="label">History of: main.rs</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <tr style="border-bottom: 1px solid #eee; text-align: left; background: #eee;">
+              <th>Rev</th>
+              <th>CL</th>
+              <th>Date</th>
+              <th>Author</th>
+              <th>Description</th>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee; background: #f0f7ff;">
+              <td>10</td>
+              <td>54321</td>
+              <td>2026-05-15</td>
+              <td>user_a</td>
+              <td>Fix bug in main loop</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td>9</td>
+              <td>54300</td>
+              <td>2026-05-14</td>
+              <td>user_b</td>
+              <td>Initial setup</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Bottom-Right: Content Preview -->
+        <div style="flex: 1.5; padding: 10px; background: #fff; overflow: auto;">
+          <div class="label">Content: main.rs (Rev 10)</div>
+          <pre style="font-family: monospace; font-size: 11px; color: #333; line-height: 1.4;">
+fn main() {
+    // Selected revision content
+    println!("Hello, p4y!");
+}
+          </pre>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>

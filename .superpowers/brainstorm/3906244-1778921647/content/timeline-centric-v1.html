@@ -1,0 +1,56 @@
+<h2>p4y: 타임라인 중심 히스토리 브라우저</h2>
+<p class="subtitle">어떤 변경사항(Changelist)이 있었는지 파악하는 것이 최우선인 레이아웃입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y Timeline Viewer</div>
+  <div class="mockup-body" style="height: 500px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속 설정] [필터: Author/Path...] | <b>View: Submitted Changelists</b>
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left: Changelist Feed (Main focus) -->
+      <div class="mock-sidebar" style="width: 400px; border-right: 2px solid #ccc; padding: 10px; background: #fff; overflow-y: auto;">
+        <div class="label">Recent Changelists</div>
+        <div class="card" style="margin-bottom: 8px; border: 2px solid #007bff; background: #f0f7ff;">
+          <div style="font-weight: bold;">CL 54321 - Fix bug in main loop</div>
+          <div style="font-size: 11px; color: #666;">2026-05-15 14:20 | user_a</div>
+        </div>
+        <div class="card" style="margin-bottom: 8px; opacity: 0.8;">
+          <div style="font-weight: bold;">CL 54310 - Update documentation</div>
+          <div style="font-size: 11px; color: #666;">2026-05-15 10:05 | user_b</div>
+        </div>
+        <div class="card" style="margin-bottom: 8px; opacity: 0.8;">
+          <div style="font-weight: bold;">CL 54300 - Initial setup</div>
+          <div style="font-size: 11px; color: #666;">2026-05-14 16:45 | user_b</div>
+        </div>
+      </div>
+      
+      <!-- Right: Detailed view for selected CL -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column; background: #fafafa;">
+        <!-- Files in this CL -->
+        <div style="flex: 1; padding: 10px; border-bottom: 1px solid #ddd; overflow-y: auto;">
+          <div class="label">Files in CL 54321</div>
+          <ul style="list-style: none; padding-left: 5px; font-size: 13px;">
+            <li>📄 src/main.rs <span style="color: green;">(edit)</span></li>
+            <li>📄 src/util.rs <span style="color: green;">(edit)</span></li>
+          </ul>
+        </div>
+        
+        <!-- Content Preview -->
+        <div style="flex: 2; padding: 10px; background: #fff; overflow: auto;">
+          <div class="label">File Content: src/main.rs (Rev 10)</div>
+          <pre style="font-family: monospace; font-size: 11px;">
+// ... code diff or full content ...
+fn main() {
++   let result = process_data();
+-   let result = data();
+    println!("Result: {}", result);
+}
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

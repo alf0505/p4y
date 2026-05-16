@@ -1,0 +1,59 @@
+<h2>P4V 주요 레이아웃 구성 요소</h2>
+<p class="subtitle">2번 '비주얼 미러링' 전략을 위해 구현해야 할 핵심 영역들입니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y UI 프로토타입 구상</div>
+  <div class="mockup-body" style="height: 400px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속] [새로고침] [체크아웃] [제출] | [워크스페이스 선택...]
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left Sidebar (Depot/Workspace Tree) -->
+      <div class="mock-sidebar" style="width: 250px; border-right: 1px solid #ccc; padding: 10px;">
+        <div class="label">Depot / Workspace</div>
+        <ul style="list-style: none; padding-left: 10px;">
+          <li>📁 //depot</li>
+          <li style="padding-left: 15px;">📁 project_root</li>
+          <li style="padding-left: 30px;">📄 main.rs</li>
+        </ul>
+      </div>
+      
+      <!-- Right Main Content -->
+      <div class="mock-content" style="flex: 1; display: flex; flex-direction: column; padding: 10px;">
+        <!-- Tabs -->
+        <div style="display: flex; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+          <div style="padding: 5px 15px; border: 1px solid #ccc; border-bottom: none; background: #eee;">Submitted</div>
+          <div style="padding: 5px 15px; border: 1px solid transparent;">Pending</div>
+          <div style="padding: 5px 15px; border: 1px solid transparent;">Workspaces</div>
+        </div>
+        
+        <!-- Table View (Main Content) -->
+        <div class="placeholder" style="flex: 1;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                <th>Changelist</th>
+                <th>Date</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>12345</td>
+                <td>2026-05-16</td>
+                <td>Initial commit</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Bottom Log/Status -->
+        <div style="height: 80px; border-top: 1px solid #ccc; margin-top: 10px; padding: 5px; font-family: monospace; font-size: 12px; overflow-y: auto;">
+          Connected to P4PORT=ssl:localhost:1666...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

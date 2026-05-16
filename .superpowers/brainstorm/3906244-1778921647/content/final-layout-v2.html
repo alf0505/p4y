@@ -1,0 +1,71 @@
+<h2>p4y: 트리 + 히스토리 전용 브라우저 (최종)</h2>
+<p class="subtitle">왼쪽 트리로 탐색하고 오른쪽에서 히스토리를 확인합니다. 내용은 별도 모달로 조회합니다.</p>
+
+<div class="mockup">
+  <div class="mockup-header">p4y History Explorer</div>
+  <div class="mockup-body" style="height: 500px; display: flex; flex-direction: column;">
+    <!-- Top Toolbar -->
+    <div class="mock-nav" style="margin-bottom: 5px;">
+      [접속 설정] [새로고침] | <b>Workspace: Project_Alpha</b>
+    </div>
+    
+    <div style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left: Stable Workspace Tree -->
+      <div class="mock-sidebar" style="width: 250px; border-right: 2px solid #ccc; padding: 10px; background: #f8f9fa;">
+        <div class="label">Workspace Tree</div>
+        <ul style="list-style: none; padding-left: 10px; font-size: 13px; line-height: 1.8;">
+          <li>📁 . (root)</li>
+          <li style="padding-left: 15px;">📁 src</li>
+          <li style="padding-left: 30px; background: #007bff; color: white; border-radius: 2px; padding: 2px 5px;">📄 main.rs</li>
+          <li style="padding-left: 30px;">📄 util.rs</li>
+          <li>📄 Cargo.toml</li>
+        </ul>
+      </div>
+      
+      <!-- Right: History Focus ONLY -->
+      <div class="mock-content" style="flex: 1; padding: 10px; background: #fff; overflow-y: auto;">
+        <div class="label">History of: main.rs</div>
+        <p style="font-size: 11px; color: #888; margin-bottom: 10px;">* 리비전을 더블 클릭하거나 [내용 보기] 버튼으로 본문을 모달에서 확인합니다.</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr style="border-bottom: 2px solid #ddd; text-align: left; background: #eee;">
+            <th>Rev</th>
+            <th>CL</th>
+            <th>Date</th>
+            <th>Author</th>
+            <th>Description</th>
+            <th>Action</th>
+          </tr>
+          <tr style="border-bottom: 1px solid #eee;">
+            <td>10</td>
+            <td>54321</td>
+            <td>2026-05-15</td>
+            <td>user_a</td>
+            <td>Fix bug in main loop</td>
+            <td><button style="font-size: 10px;">내용 보기</button></td>
+          </tr>
+          <tr style="border-bottom: 1px solid #eee;">
+            <td>9</td>
+            <td>54300</td>
+            <td>2026-05-14</td>
+            <td>user_b</td>
+            <td>Initial setup</td>
+            <td><button style="font-size: 10px;">내용 보기</button></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top: 20px; border: 2px solid #666;">
+  <div class="mockup-header" style="background: #444;">Modal Preview (Example)</div>
+  <div class="mockup-body" style="height: 200px; padding: 20px;">
+     <h3>main.rs (Revision 10)</h3>
+     <pre style="background: #f4f4f4; padding: 10px; font-size: 12px; border: 1px solid #ddd;">
+fn main() {
+    println!("Hello from Modal!");
+}
+     </pre>
+     <div style="text-align: right;"><button>닫기</button></div>
+  </div>
+</div>
