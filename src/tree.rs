@@ -36,51 +36,102 @@ impl TreeNode {
             is_expanded: false,
         }
     }
+
+    pub fn is_directory(&self) -> bool {
+        self.node_type == NodeType::Directory
+    }
+
+    pub fn toggle_expanded(&mut self) {
+        self.is_expanded = !self.is_expanded;
+    }
+
+    pub fn update_node(&mut self, target_path: &str, new_children: Vec<TreeNode>) -> bool {
+        if self.path == target_path {
+            self.children = Some(new_children);
+            self.is_expanded = true;
+            return true;
+        }
+        if let Some(ref mut children) = self.children {
+            for child in children {
+                if child.update_node(target_path, new_children.clone()) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    pub fn find_and_toggle(&mut self, target_path: &str) -> bool {
+        if self.path == target_path {
+            self.toggle_expanded();
+            return true;
+        }
+        if let Some(ref mut children) = self.children {
+            for child in children {
+                if child.find_and_toggle(target_path) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
 }
 
 pub async fn fetch_children(parent_path: &str) -> Result<Vec<TreeNode>, P4Error> {
+    let wildcard_path = format!("{}/*", parent_path);
+
+    let (dirs_output, files_output) = tokio::join!(
+        run_p4(vec!["dirs", &wildcard_path]),
+        run_p4(vec!["files", &wildcard_path])
+    );
+
     let mut children = Vec::new();
 
-    // Fetch directories
-    let dirs_output = run_p4(vec!["dirs", &format!("{}/*", parent_path)]).await;
-    match dirs_output {
-        Ok(output) => {
-            let ztag = parse_ztag(&output);
-            for record in ztag.records {
-                if let Some(path) = record.get("dir") {
-                    let name = path.split('/').last().unwrap_or("").to_string();
-                    children.push(TreeNode::new_directory(name, path.clone()));
+    let process_output = |output: Result<String, P4Error>, key: &str, node_type: NodeType| {
+        match output {
+            Ok(out) => {
+                let ztag = parse_ztag(&out);
+                let mut nodes = Vec::new();
+                for record in ztag.records {
+                    if let Some(path) = record.get(key) {
+                        let name = path.split('/').last().unwrap_or("").to_string();
+                        nodes.push(TreeNode {
+                            name,
+                            path: path.clone(),
+                            node_type: node_type.clone(),
+                            children: None,
+                            is_expanded: false,
+                        });
+                    }
                 }
+                Ok(nodes)
             }
+            Err(P4Error::Process(e)) if e.contains("no such file(s)") => Ok(Vec::new()),
+            Err(e) => Err(e),
         }
-        Err(P4Error::Process(e)) if e.contains("no such file(s)") => {
-            // Ignore "no such file(s)" error from p4 dirs
-        }
-        Err(e) => return Err(e),
-    }
+    };
 
-    // Fetch files
-    let files_output = run_p4(vec!["files", &format!("{}/*", parent_path)]).await;
-    match files_output {
-        Ok(output) => {
-            let ztag = parse_ztag(&output);
-            for record in ztag.records {
-                if let Some(path) = record.get("depotFile") {
-                    let name = path.split('/').last().unwrap_or("").to_string();
-                    children.push(TreeNode::new_file(name, path.clone()));
-                }
-            }
-        }
-        Err(P4Error::Process(e)) if e.contains("no such file(s)") => {
-            // Ignore "no such file(s)" error from p4 files
-        }
-        Err(e) => return Err(e),
-    }
+    children.extend(process_output(dirs_output, "dir", NodeType::Directory)?);
+    children.extend(process_output(files_output, "depotFile", NodeType::File)?);
 
     // Sort children by name
     children.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok(children)
+}
+
+pub fn find_node_mut<'a>(node: &'a mut TreeNode, path: &str) -> Option<&'a mut TreeNode> {
+    if node.path == path {
+        return Some(node);
+    }
+    if let Some(ref mut children) = node.children {
+        for child in children {
+            if let Some(found) = find_node_mut(child, path) {
+                return Some(found);
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -131,5 +182,39 @@ mod tests {
         assert_eq!(children.len(), 2);
         assert_eq!(children[0].name, "Cargo.toml");
         assert_eq!(children[1].name, "README.md");
+    }
+
+    #[test]
+    fn test_combine_dirs_and_files_logic() {
+        let dirs_output = "... dir //depot/p4y/src\n";
+        let files_output = "... depotFile //depot/p4y/Cargo.toml\n";
+        
+        let mut children = Vec::new();
+        
+        // Simulating dirs part of fetch_children
+        let ztag_dirs = parse_ztag(dirs_output);
+        for record in ztag_dirs.records {
+            if let Some(path) = record.get("dir") {
+                let name = path.split('/').last().unwrap_or("").to_string();
+                children.push(TreeNode::new_directory(name, path.clone()));
+            }
+        }
+
+        // Simulating files part of fetch_children
+        let ztag_files = parse_ztag(files_output);
+        for record in ztag_files.records {
+            if let Some(path) = record.get("depotFile") {
+                let name = path.split('/').last().unwrap_or("").to_string();
+                children.push(TreeNode::new_file(name, path.clone()));
+            }
+        }
+
+        children.sort_by(|a, b| a.name.cmp(&b.name));
+
+        assert_eq!(children.len(), 2);
+        assert_eq!(children[0].name, "Cargo.toml");
+        assert_eq!(children[0].node_type, NodeType::File);
+        assert_eq!(children[1].name, "src");
+        assert_eq!(children[1].node_type, NodeType::Directory);
     }
 }

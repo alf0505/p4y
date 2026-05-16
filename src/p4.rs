@@ -94,6 +94,69 @@ pub async fn run_p4(args: Vec<&str>) -> Result<String, P4Error> {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct Changelist {
+    pub id: u32,
+    pub author: String,
+    pub date: String,
+    pub description: String,
+}
+
+pub async fn fetch_history(path: &str) -> Result<Vec<Changelist>, P4Error> {
+    let output = run_p4(vec!["changes", "-m", "100", path]).await?;
+    let ztag = parse_ztag(&output);
+    let mut changes = Vec::new();
+
+    for record in ztag.records {
+        if let Some(change_str) = record.get("change") {
+            if let Ok(id) = change_str.parse::<u32>() {
+                changes.push(Changelist {
+                    id,
+                    author: record.get("user").cloned().unwrap_or_default(),
+                    date: record.get("time").cloned().unwrap_or_default(),
+                    description: record.get("desc").cloned().unwrap_or_default(),
+                });
+            }
+        }
+    }
+
+    Ok(changes)
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ChangelistDetail {
+    pub id: u32,
+    pub author: String,
+    pub date: String,
+    pub description: String,
+    pub affected_files: Vec<String>,
+}
+
+pub async fn fetch_cl_detail(cl_id: u32) -> Result<ChangelistDetail, P4Error> {
+    let cl_id_str = cl_id.to_string();
+    let output = run_p4(vec!["describe", "-s", &cl_id_str]).await?;
+    let ztag = parse_ztag(&output);
+    
+    if let Some(record) = ztag.records.first() {
+        let mut affected_files = Vec::new();
+        let mut i = 0;
+        while let Some(depot_file) = record.get(&format!("depotFile{}", i)) {
+            affected_files.push(depot_file.clone());
+            i += 1;
+        }
+
+        Ok(ChangelistDetail {
+            id: cl_id,
+            author: record.get("user").cloned().unwrap_or_default(),
+            date: record.get("time").cloned().unwrap_or_default(),
+            description: record.get("desc").cloned().unwrap_or_default(),
+            affected_files,
+        })
+    } else {
+        Err(P4Error::Process("No changelist detail found".to_string()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
