@@ -1,3 +1,5 @@
+mod p4;
+
 use iced::{executor, Application, Command, Element, Settings, Theme};
 
 pub fn main() -> iced::Result {
