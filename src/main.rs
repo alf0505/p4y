@@ -1,5 +1,6 @@
 mod p4;
 mod tree;
+mod style;
 
 use iced::widget::{button, column, container, row, scrollable, text, text_input};
 use iced::{executor, Application, Command, Element, Settings, Theme};
@@ -14,6 +15,7 @@ struct P4y {
     root_node: Option<TreeNode>,
     history: Vec<Changelist>,
     selected_cl: Option<ChangelistDetail>,
+    selected_path: Option<String>,
     loading_tree: bool,
     loading_history: bool,
     loading_detail: bool,
@@ -46,7 +48,7 @@ enum Message {
 impl Application for P4y {
     type Executor = executor::Default;
     type Message = Message;
-    type Theme = Theme;
+    type Theme = style::PremiumDark;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Message>) {
@@ -57,6 +59,7 @@ impl Application for P4y {
                 root_node: Some(TreeNode::new_directory("root".to_string(), root_path.clone())),
                 history: Vec::new(),
                 selected_cl: None,
+                selected_path: None,
                 loading_tree: true,
                 loading_history: false,
                 loading_detail: false,
@@ -77,6 +80,10 @@ impl Application for P4y {
 
     fn title(&self) -> String {
         String::from("p4y - Perforce Inspector")
+    }
+
+    fn theme(&self) -> Self::Theme {
+        style::PremiumDark
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
@@ -154,6 +161,7 @@ impl Application for P4y {
                 Command::none()
             }
             Message::FileSelected(path) => {
+                self.selected_path = Some(path.clone());
                 self.loading_history = true;
                 let path_for_fetch = path.clone();
                 let settings = self.settings.clone();
@@ -201,118 +209,180 @@ impl Application for P4y {
         }
     }
 
-    fn view(&self) -> Element<'_, Message> {
+    fn view(&self) -> Element<'_, Message, style::PremiumDark> {
         let toolbar = container(
             row![
-                text("p4y").size(24).width(iced::Length::Fill),
-                button("Refresh").on_press(Message::Refresh),
-                button("Settings").on_press(Message::ToggleSettings),
+                text("p4y").size(24).width(iced::Length::Fill).style(style::TEXT_BRIGHT),
+                button(text("Refresh").size(14))
+                    .on_press(Message::Refresh)
+                    .style(style::Button::Secondary)
+                    .padding([6, 12]),
+                button(text("Settings").size(14))
+                    .on_press(Message::ToggleSettings)
+                    .style(style::Button::Secondary)
+                    .padding([6, 12]),
             ]
-            .spacing(10)
-            .padding(10)
+            .spacing(12)
+            .padding(12)
             .align_items(iced::Alignment::Center)
         )
-        .style(iced::theme::Container::Box);
+        .style(style::Container::Sidebar);
+
+        // Tree Pane
+        let tree_header = container(
+            text("DEPOT TREE").size(12).style(style::TEXT_BRIGHT)
+        )
+        .width(iced::Length::Fill)
+        .padding([8, 12])
+        .style(style::Container::Header);
 
         let tree_content = if self.loading_tree {
-            column![text("Loading tree...")]
+            container(text("Loading tree...").style(style::TEXT_NORMAL))
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
         } else if let Some(ref root) = self.root_node {
-            column![
-                text("Depot Tree").size(18),
-                scrollable(view_tree(root, 0))
-            ].spacing(10)
+            scrollable(view_tree(root, 0, self.selected_path.as_deref())).into()
         } else {
-            column![text("No tree data")]
+            container(text("No tree data").style(style::TEXT_NORMAL))
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
         };
 
-        let tree_pane = container(tree_content)
-            .width(300)
-            .height(iced::Length::Fill)
-            .padding(10)
-            .style(iced::theme::Container::Box);
+        let tree_pane = container(
+            column![tree_header, tree_content]
+        )
+        .width(300)
+        .height(iced::Length::Fill)
+        .style(style::Container::Sidebar);
 
-        let history_list = if self.loading_history {
-            column![
-                text("File History").size(18),
-                text("Loading history...").style(iced::theme::Text::Color(iced::Color::from_rgb(0.5, 0.5, 0.5)))
-            ].spacing(10)
+        // History Pane
+        let history_header = container(
+            text("FILE HISTORY").size(12).style(style::TEXT_BRIGHT)
+        )
+        .width(iced::Length::Fill)
+        .padding([8, 12])
+        .style(style::Container::Header);
+
+        let history_content = if self.loading_history {
+            container(text("Loading history...").style(style::TEXT_NORMAL))
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
         } else {
-            let col = column![text("File History").size(18)].spacing(5);
-            let history_scroll = if self.history.is_empty() {
-                scrollable(text("Select a file to see its history"))
+            if self.history.is_empty() {
+                container(text("Select a file to see its history").size(14).style(style::TEXT_NORMAL))
+                    .width(iced::Length::Fill)
+                    .height(iced::Length::Fill)
+                    .center_x()
+                    .center_y()
+                    .into()
             } else {
-                let mut items = column![].spacing(5);
+                let mut items = column![].spacing(1);
                 for cl in &self.history {
+                    let is_selected = self.selected_cl.as_ref().map(|d| d.id == cl.id).unwrap_or(false);
                     items = items.push(
                         button(
                             column![
-                                text(format!("CL {} - {} ({})", cl.id, cl.author, cl.date)).size(14),
-                                text(&cl.description).size(12),
-                            ]
+                                row![
+                                    text(format!("CL {}", cl.id)).size(14).style(style::TEXT_BRIGHT),
+                                    iced::widget::horizontal_space().width(iced::Length::Fill),
+                                    text(&cl.date).size(12).style(style::TEXT_NORMAL),
+                                ],
+                                text(&cl.author).size(12).style(style::ACCENT),
+                                text(&cl.description).size(12).style(style::TEXT_NORMAL),
+                            ].spacing(4)
                         )
                         .width(iced::Length::Fill)
+                        .padding(10)
                         .on_press(Message::CLSelected(cl.id))
-                        .style(iced::theme::Button::Secondary)
+                        .style(style::Button::ListItem { selected: is_selected })
                     );
                 }
-                scrollable(items)
-            };
-            col.push(history_scroll)
+                scrollable(items).into()
+            }
         };
 
-        let history_pane = container(history_list)
-            .width(350)
-            .height(iced::Length::Fill)
-            .padding(10)
-            .style(iced::theme::Container::Box);
+        let history_pane = container(
+            column![history_header, history_content]
+        )
+        .width(350)
+        .height(iced::Length::Fill)
+        .style(style::Container::Sidebar);
+
+        // Detail Pane
+        let detail_header = container(
+            text("CHANGELIST DETAILS").size(12).style(style::TEXT_BRIGHT)
+        )
+        .width(iced::Length::Fill)
+        .padding([8, 12])
+        .style(style::Container::Header);
 
         let detail_content = if self.loading_detail {
-            column![
-                text("CL Details").size(18),
-                text("Loading CL details...").style(iced::theme::Text::Color(iced::Color::from_rgb(0.5, 0.5, 0.5)))
-            ].spacing(10)
+            container(text("Loading CL details...").style(style::TEXT_NORMAL))
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
         } else if let Some(ref detail) = self.selected_cl {
-            let col = column![
-                text("CL Details").size(18),
-                text(format!("Changelist {}", detail.id)).size(22),
+            let info = column![
+                text(format!("Changelist {}", detail.id)).size(24).style(style::TEXT_BRIGHT),
                 row![
-                    text(format!("Author: {}", detail.author)).size(14),
-                    text(format!("Date: {}", detail.date)).size(14),
+                    text(format!("Author: {}", detail.author)).size(14).style(style::ACCENT),
+                    text(format!("Date: {}", detail.date)).size(14).style(style::TEXT_NORMAL),
                 ].spacing(20),
                 container(
-                    scrollable(text(&detail.description).size(14))
+                    scrollable(text(&detail.description).size(14).style(style::TEXT_NORMAL))
                 )
-                .padding(10)
+                .padding(12)
                 .width(iced::Length::Fill)
-                .height(iced::Length::Fixed(100.0))
-                .style(iced::theme::Container::Box),
-                text("Affected Files:").size(16),
-            ].spacing(10);
+                .height(iced::Length::Fixed(120.0))
+                .style(style::Container::Box),
+                text("AFFECTED FILES").size(12).style(style::TEXT_BRIGHT),
+            ].spacing(16);
 
-            let mut files_col = column![].spacing(5);
+            let mut files_col = column![].spacing(1);
             for file in &detail.affected_files {
                 let file_path = file.clone();
                 let cl_id = detail.id;
                 files_col = files_col.push(
-                    row![
-                        text(file).size(12).width(iced::Length::Fill),
-                        button("View").on_press(Message::ViewContent(format!("{}@{}", file_path, cl_id))).padding(2)
-                    ].spacing(10)
+                    container(
+                        row![
+                            text(file).size(13).style(style::TEXT_NORMAL).width(iced::Length::Fill),
+                            button(text("View").size(12))
+                                .on_press(Message::ViewContent(format!("{}@{}", file_path, cl_id)))
+                                .style(style::Button::Primary)
+                                .padding([4, 10])
+                        ].spacing(10).align_items(iced::Alignment::Center)
+                    )
+                    .padding([4, 8])
+                    .style(style::Container::Main)
                 );
             }
-            col.push(scrollable(files_col))
+            column![info, scrollable(files_col)].padding(20).spacing(16).into()
         } else {
-            column![
-                text("CL Details").size(18),
-                text("Select a changelist to see details")
-            ].spacing(10)
+            container(text("Select a changelist to see details").style(style::TEXT_NORMAL))
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .center_x()
+                .center_y()
+                .into()
         };
 
-        let detail_pane = container(detail_content)
-            .width(iced::Length::Fill)
-            .height(iced::Length::Fill)
-            .padding(10)
-            .style(iced::theme::Container::Box);
+        let detail_pane = container(
+            column![detail_header, detail_content]
+        )
+        .width(iced::Length::Fill)
+        .height(iced::Length::Fill)
+        .style(style::Container::Main);
 
         let main_content = row![tree_pane, history_pane, detail_pane];
 
@@ -322,17 +392,20 @@ impl Application for P4y {
             content = content.push(
                 container(
                     row![
-                        text(format!("Error: {}", err)).style(iced::theme::Text::Color(iced::Color::from_rgb(0.8, 0.0, 0.0))),
-                        button("Clear").on_press(Message::ClearError)
-                    ].spacing(10)
+                        text(format!("Error: {}", err)).style(iced::Color::from_rgb(0.9, 0.3, 0.3)),
+                        iced::widget::horizontal_space().width(iced::Length::Fill),
+                        button(text("Clear").size(12))
+                            .on_press(Message::ClearError)
+                            .style(style::Button::Secondary)
+                    ].spacing(10).align_items(iced::Alignment::Center)
                 )
                 .width(iced::Length::Fill)
                 .padding(10)
-                .style(iced::theme::Container::Box)
+                .style(style::Container::Header)
             );
         }
 
-        let base_view: Element<_> = content.into();
+        let base_view: Element<_, style::PremiumDark> = content.into();
 
         let mut final_view = base_view;
 
@@ -340,31 +413,33 @@ impl Application for P4y {
             let settings_content = container(
                 column![
                     row![
-                        text("Settings").size(24).width(iced::Length::Fill),
-                        button("Close").on_press(Message::ToggleSettings)
+                        text("Settings").size(24).style(style::TEXT_BRIGHT).width(iced::Length::Fill),
+                        button(text("✕").size(16))
+                            .on_press(Message::ToggleSettings)
+                            .style(style::Button::Ghost)
                     ],
                     column![
-                        text("P4PORT"),
-                        text_input("e.g. perforce:1666", &self.settings.port).on_input(Message::P4PortChanged),
-                        text("P4USER"),
-                        text_input("username", &self.settings.user).on_input(Message::P4UserChanged),
-                        text("P4CLIENT"),
-                        text_input("workspace", &self.settings.client).on_input(Message::P4ClientChanged),
-                    ].spacing(10)
-                ].spacing(20)
+                        text("P4PORT").size(12).style(style::TEXT_NORMAL),
+                        text_input("e.g. perforce:1666", &self.settings.port).on_input(Message::P4PortChanged).padding(10),
+                        text("P4USER").size(12).style(style::TEXT_NORMAL),
+                        text_input("username", &self.settings.user).on_input(Message::P4UserChanged).padding(10),
+                        text("P4CLIENT").size(12).style(style::TEXT_NORMAL),
+                        text_input("workspace", &self.settings.client).on_input(Message::P4ClientChanged).padding(10),
+                    ].spacing(12)
+                ].spacing(24)
             )
-            .width(400)
-            .padding(20)
-            .style(iced::theme::Container::Box);
+            .width(450)
+            .padding(24)
+            .style(style::Container::Box);
 
             final_view = container(settings_content)
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
                 .center_y()
-                .style(|_theme: &Theme| {
+                .style(|_theme: &style::PremiumDark| {
                     iced::widget::container::Appearance {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
                         ..Default::default()
                     }
                 })
@@ -375,28 +450,32 @@ impl Application for P4y {
             let modal_content = container(
                 column![
                     row![
-                        text("File Content").size(20).width(iced::Length::Fill),
-                        button("Close").on_press(Message::CloseModal)
-                    ],
-                    container(scrollable(text(content).size(12)))
+                        text("File Content").size(20).style(style::TEXT_BRIGHT).width(iced::Length::Fill),
+                        button(text("Close").size(14))
+                            .on_press(Message::CloseModal)
+                            .style(style::Button::Primary)
+                            .padding([6, 12])
+                    ].align_items(iced::Alignment::Center),
+                    container(scrollable(text(content).size(13).style(style::TEXT_NORMAL)))
                         .width(iced::Length::Fill)
                         .height(iced::Length::Fill)
-                        .style(iced::theme::Container::Box)
-                ].spacing(10)
+                        .padding(12)
+                        .style(style::Container::Main)
+                ].spacing(16)
             )
-            .width(iced::Length::FillPortion(8))
-            .height(iced::Length::FillPortion(8))
-            .padding(20)
-            .style(iced::theme::Container::Box);
+            .width(iced::Length::FillPortion(9))
+            .height(iced::Length::FillPortion(9))
+            .padding(24)
+            .style(style::Container::Box);
 
             final_view = container(modal_content)
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
                 .center_x()
                 .center_y()
-                .style(|_theme: &Theme| {
+                .style(|_theme: &style::PremiumDark| {
                     iced::widget::container::Appearance {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
                         ..Default::default()
                     }
                 })
@@ -407,11 +486,11 @@ impl Application for P4y {
     }
 }
 
-fn view_tree(node: &TreeNode, indent: u16) -> Element<'_, Message> {
-    let mut content = column![].spacing(2);
+fn view_tree<'a>(node: &'a TreeNode, indent: u16, selected_path: Option<&'a str>) -> Element<'a, Message, style::PremiumDark> {
+    let mut content = column![].spacing(0);
 
     let prefix = if node.is_directory() {
-        if node.is_expanded { "[-] " } else { "[+] " }
+        if node.is_expanded { "▼ " } else { "▶ " }
     } else {
         "  "
     };
@@ -422,19 +501,25 @@ fn view_tree(node: &TreeNode, indent: u16) -> Element<'_, Message> {
         Message::FileSelected(node.path.clone())
     };
 
-    let label = button(text(format!("{}{}", prefix, node.name)).size(14))
-        .padding(2)
-        .style(iced::theme::Button::Text)
-        .on_press(on_press);
+    let is_selected = selected_path == Some(&node.path);
 
-    content = content.push(
-        row![iced::widget::horizontal_space().width(iced::Length::Fixed(indent as f32 * 15.0)), label]
-    );
+    let label = button(
+        row![
+            iced::widget::horizontal_space().width(iced::Length::Fixed(indent as f32 * 12.0)),
+            text(format!("{}{}", prefix, node.name)).size(13)
+        ].align_items(iced::Alignment::Center)
+    )
+    .width(iced::Length::Fill)
+    .padding([3, 8])
+    .style(style::Button::ListItem { selected: is_selected })
+    .on_press(on_press);
+
+    content = content.push(label);
 
     if node.is_expanded {
         if let Some(ref children) = node.children {
             for child in children {
-                content = content.push(view_tree(child, indent + 1));
+                content = content.push(view_tree(child, indent + 1, selected_path));
             }
         }
     }

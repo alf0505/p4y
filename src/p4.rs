@@ -60,10 +60,9 @@ pub fn parse_ztag(output: &str) -> ZtagOutput {
         }
 
         if let Some(rest) = line.strip_prefix("...") {
-            let rest = rest.trim();
-            let mut parts = rest.splitn(2, ' ');
+            let rest = rest.trim_start();
+            let mut parts = rest.splitn(2, |c: char| c.is_whitespace());
             if let Some(key) = parts.next() {
-                let key = key.trim();
                 if !key.is_empty() {
                     let value = parts.next().unwrap_or("").trim().to_string();
                     current_record.insert(key.to_string(), value);
@@ -228,12 +227,25 @@ mod tests {
         let output = "  ...   field   value  \n\n  ... field2 value2  ";
         let parsed = parse_ztag(output);
         assert_eq!(parsed.records.len(), 2);
-        // splitn(2, ' ') with "  field   value  " might be tricky
-        // strip_prefix("... ") gives "  field   value  "
-        // splitn(2, ' ') on that gives "  field" and "  value  " (simplified view)
-        // Actually: "  field   value  ".trim() is "field   value"
-        // rest.splitn(2, ' ') where rest is "  field   value  "
-        // parts.next() is "" (because of leading spaces)
-        // Let's re-verify my parse_ztag logic.
+        assert_eq!(parsed.records[0].get("field").unwrap(), "value");
+        assert_eq!(parsed.records[1].get("field2").unwrap(), "value2");
+    }
+
+    #[test]
+    fn test_parse_ztag_empty_lines_and_noise() {
+        let output = "\n\n... key1 value1\n\n\n... key2 value2\n\n";
+        let parsed = parse_ztag(output);
+        assert_eq!(parsed.records.len(), 2);
+        assert_eq!(parsed.records[0].get("key1").unwrap(), "value1");
+        assert_eq!(parsed.records[1].get("key2").unwrap(), "value2");
+    }
+
+    #[test]
+    fn test_parse_ztag_no_value() {
+        let output = "... key1\n... key2  ";
+        let parsed = parse_ztag(output);
+        assert_eq!(parsed.records.len(), 1);
+        assert_eq!(parsed.records[0].get("key1").unwrap(), "");
+        assert_eq!(parsed.records[0].get("key2").unwrap(), "");
     }
 }

@@ -1,0 +1,144 @@
+<style>
+  :root {
+    --bg-main: #1e1e1e;
+    --bg-side: #252526;
+    --bg-item-active: #37373d;
+    --text-main: #cccccc;
+    --text-bright: #ffffff;
+    --accent: #007acc;
+    --border: #333333;
+  }
+  body { background-color: #121212; color: var(--text-main); font-family: 'Inter', sans-serif; }
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    background: var(--bg-main);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+  }
+  .toolbar {
+    background: var(--bg-side);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn {
+    background: #333;
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); }
+  
+  .main-content { display: flex; flex: 1; overflow: hidden; }
+  
+  .pane { display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+  .pane-header {
+    background: #2d2d2d;
+    padding: 6px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #888;
+    letter-spacing: 0.5px;
+  }
+  
+  .tree-area { width: 240px; background: var(--bg-side); }
+  .history-area { width: 320px; }
+  .detail-area { flex: 1; background: #1a1a1a; }
+  
+  .list-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #2a2a2a;
+    cursor: pointer;
+  }
+  .list-item:hover { background: #2a2d2e; }
+  .list-item.active { background: var(--bg-item-active); border-left: 3px solid var(--accent); }
+  
+  .cl-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: #444;
+    font-size: 10px;
+    color: #aaa;
+    margin-right: 6px;
+  }
+  
+  pre {
+    background: #000;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #d4d4d4;
+  }
+</style>
+
+<h2>p4y: 프리미엄 다크 테마 디자인 (V2)</h2>
+<p class="subtitle">JetBrains나 VS Code와 같은 고성능 IDE 감성을 담은 현대적인 레이아웃입니다.</p>
+
+<div class="app-container">
+  <div class="toolbar">
+    <button class="btn btn-primary">Refresh</button>
+    <button class="btn">Settings</button>
+    <span style="font-size: 12px; color: #666;">// Workspace: <b>p4y_dev_main</b></span>
+  </div>
+  
+  <div class="main-content">
+    <!-- Tree -->
+    <div class="pane tree-area">
+      <div class="pane-header">Project Explorer</div>
+      <div class="list-item">📁 src</div>
+      <div class="list-item active" style="padding-left: 24px;">📄 main.rs</div>
+      <div class="list-item" style="padding-left: 24px;">📄 p4.rs</div>
+      <div class="list-item">📄 Cargo.toml</div>
+    </div>
+    
+    <!-- History -->
+    <div class="pane history-area">
+      <div class="pane-header">Changelist History</div>
+      <div class="list-item active">
+        <span class="cl-badge">12345</span> <b style="color: var(--text-bright)">Refactor UI layout</b>
+        <div style="font-size: 10px; color: #777; margin-top: 4px;">2 hours ago • alf0505</div>
+      </div>
+      <div class="list-item">
+        <span class="cl-badge">12340</span> Initial project setup
+        <div style="font-size: 10px; color: #777; margin-top: 4px;">Yesterday • alf0505</div>
+      </div>
+    </div>
+    
+    <!-- Details -->
+    <div class="pane detail-area" style="border-right: none;">
+      <div class="pane-header">CL Details: 12345</div>
+      <div style="padding: 16px;">
+        <div style="margin-bottom: 20px;">
+          <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 12px;">DESCRIPTION</h4>
+          <div style="color: var(--text-bright); line-height: 1.4;">Refactored the main application layout to support a 3-column horizontal split and added premium dark theme support.</div>
+        </div>
+        
+        <div>
+          <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 12px;">AFFECTED FILES</h4>
+          <div class="list-item" style="border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>src/main.rs <span style="color: #569cd6; font-size: 11px;">#10 [edit]</span></span>
+            <button class="btn" style="background: #444;">View</button>
+          </div>
+          <div class="list-item" style="border: 1px solid #333; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>src/p4.rs <span style="color: #569cd6; font-size: 11px;">#5 [edit]</span></span>
+            <button class="btn" style="background: #444;">View</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

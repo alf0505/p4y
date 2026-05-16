@@ -80,13 +80,12 @@ pub async fn fetch_children(parent_path: &str, settings: Option<P4Settings>) -> 
                 for record in ztag.records {
                     if let Some(path) = record.get(key) {
                         let name = path.split('/').last().unwrap_or("").to_string();
-                        nodes.push(TreeNode {
-                            name,
-                            path: path.clone(),
-                            node_type: node_type.clone(),
-                            children: None,
-                            is_expanded: false,
-                        });
+                        let node = if node_type == NodeType::Directory {
+                            TreeNode::new_directory(name, path.clone())
+                        } else {
+                            TreeNode::new_file(name, path.clone())
+                        };
+                        nodes.push(node);
                     }
                 }
                 Ok(nodes)
